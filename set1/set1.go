@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	crypt "gosano/crypto"
-	"log"
+	"io/ioutil"
 	"os"
 	"sort"
 )
@@ -51,17 +51,16 @@ func Problem4(filename string) crypt.Guess {
 	// read file
 	file, err := os.Open(filename)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		// fmt.Println(scanner.Text())
 		ciphers = append(ciphers, scanner.Text())
 	}
 	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	for _, cipher := range ciphers {
@@ -81,7 +80,7 @@ func ReverseProblem4() {
 	// read file
 	file, err := os.Open("set1/4.txt")
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	defer file.Close()
 
@@ -90,7 +89,7 @@ func ReverseProblem4() {
 		ciphers = append(ciphers, scanner.Text())
 	}
 	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	plaintext := "Now that the party is jumping\n"
@@ -109,4 +108,22 @@ func Problem5() string {
 	key := "ICE"
 	ciphertext := crypt.RepeatedXOR(plaintext, key)
 	return ciphertext
+}
+
+// Problem6 breaks repeated XOR
+// https://cryptopals.com/sets/1/challenges/6
+func Problem6(filename string) string {
+	// read file
+	content, err := ioutil.ReadFile(filename)
+	if err != nil {
+		panic(fmt.Sprintf("file %v not available", filename))
+	}
+
+	cipher, err := base64.StdEncoding.DecodeString(string(content))
+	if err != nil {
+		panic("file wasn't base64 encoded")
+	}
+	fmt.Println(cipher)
+
+	return ""
 }

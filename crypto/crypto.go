@@ -7,6 +7,13 @@ import (
 	"strings"
 )
 
+// Guess represents a guess for a decryption
+type Guess struct {
+	Key         string
+	Probability float32
+	Plaintext   string
+}
+
 // FixedXOR takes two equal-length buffers and produces their XOR combination
 func FixedXOR(b1 []byte, b2 []byte) []byte {
 	// check equal length
@@ -18,13 +25,6 @@ func FixedXOR(b1 []byte, b2 []byte) []byte {
 		out[i] = b1[i] ^ b2[i]
 	}
 	return out
-}
-
-// Guess represents a guess for a decryption
-type Guess struct {
-	Key         string
-	Probability float32
-	Plaintext   string
 }
 
 // DecryptSingleXOR guesses the single character that was used to XOR the plaintext. It uses chi2 probability test.
@@ -90,12 +90,10 @@ func RepeatedXOR(plaintext, key string) string {
 }
 
 // HammingDistance calculates the number of differing **bits** between two strings. We do it by XOR'ing the two strings and then count the number of 1s in the result.
-func HammingDistance(s1, s2 string) (int, error) {
-	if len(s1) != len(s2) {
-		return 0, fmt.Errorf("Hamming distance of strings of different lengths %d and %d", len(s1), len(s2))
+func HammingDistance(b1, b2 []byte) (int, error) {
+	if len(b1) != len(b2) {
+		return 0, fmt.Errorf("Hamming distance of byte arrays of different lengths %d and %d", len(b1), len(b2))
 	}
-	b1 := []byte(s1)
-	b2 := []byte(s2)
 	distance := 0
 	for i := range b1 {
 		xored := b1[i] ^ b2[i]
@@ -105,4 +103,41 @@ func HammingDistance(s1, s2 string) (int, error) {
 		}
 	}
 	return distance, nil
+}
+
+// KeysizeGuess represents a guess for the keysize in a repeated XOR cipher. Distance is the normalized Hamming distance of the first two chunks.
+type KeysizeGuess struct {
+	Keysize  int
+	Distance float32
+}
+
+// GuessRepeatedXORKeyLength tries to guess the key size for a repeated XOR encryption
+func GuessRepeatedXORKeyLength(ciphertext []byte) []KeysizeGuess {
+	var distances []KeysizeGuess
+	for i := 2; i <= 40; i++ {
+		chunk1 := ciphertext[0:i]
+		chunk2 := ciphertext[i : 2*i]
+		distance, err := HammingDistance(chunk1, chunk2)
+		if err != nil {
+			panic(err)
+		}
+		distances = append(distances, KeysizeGuess{i, float32(distance) / float32(i)})
+	}
+	sort.Slice(distances,
+		func(i, j int) bool { return distances[i].Distance < distances[j].Distance })
+	return distances
+}
+
+// DecryptRepeatedXOR decrypts a plaintext that was encrypted with the repeated XOR method.
+func DecryptRepeatedXOR(ciphertext []byte) (Guess, error) {
+	// numberOfKeysizeGuesses is an art, adjust this parameter
+	numberOfKeysizeGuesses := 3
+	keysizes := GuessRepeatedXORKeyLength(ciphertext)
+	fmt.Println(keysizes)
+
+	for i := 0; i < numberOfKeysizeGuesses; i++ {
+		fmt.Println(i)
+		fmt.Println(keysizes[i])
+	}
+	return Guess{}, nil
 }

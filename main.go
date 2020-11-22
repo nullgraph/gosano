@@ -1,24 +1,25 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	crypt "gosano/crypto"
-	// set1 "gosano/set1"
 )
 
 func main() {
 	fmt.Println("=== gosano project ===")
-	// s := "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
-	// fmt.Println(crypt.DecryptSingleXOR(s))
-	// t := "Cooking MC's like a pound of bacon."
-	// fmt.Println(crypt.FrequencyCount(t))
-	// fmt.Println(crypt.Chi2Probability(t))
-	// fmt.Println(set1.Problem5())
-	s1 := "this is a test"
-	s2 := "wokka wokka!!!"
-	fmt.Println(s1)
-	fmt.Println(s2)
-	distance, _ := crypt.HammingDistance(s1, s2)
-	fmt.Println(distance)
 
+	// set1.Problem6("set1/6.txt")
+
+	// plaintext := "April is the cruelest month, breeding\nLilacs out of the dead land, mixing\nMemory and desire, stirring\n Dull roots with spring rain.\nWinter kept us warm, covering\nEarth in forgetful snow, feeding\nA little life with dried tubers."
+	// key := "TSELIOT"
+
+	ciphertextString := "FSM3JSVvPSdzMSQsbzcmJiAgLDwgdD4qIj0neHQxNyksKz06NE8AICM1NyBlIzw7dDs1ZTghKnQwNiQoaSM1OjdpbCQmLD09IkYEKjk7ITxsKCEwdDcgPyA9MXhzNjggPSY9PSJGaQshOD9lPiYgICdzMiU9J3QnIzclJyh0JjIsImdFAz09MSk7bz8xIzFsPDx0IzI3IWVvNzslID4gITNeFiQ+PSd0PT1lKiY9MzEnIzklbyc6PDJgaSkxMTcsIi5FFXQ/LDg9IzF0PywqLG8jPSctbC09PTE3ZTg8LTEmIGs="
+	ciphertext, err := base64.StdEncoding.DecodeString(ciphertextString)
+	if err != nil {
+		panic("file wasn't base64 encoded")
+	}
+	fmt.Println(ciphertext, len(ciphertext))
+	// fmt.Println(crypt.GuessRepeatedXORKeyLength(ciphertext))
+	crypt.DecryptRepeatedXOR(ciphertext)
 }

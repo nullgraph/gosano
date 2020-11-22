@@ -1,7 +1,6 @@
 package crypto
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -33,16 +32,20 @@ func TestRepeatedXOR(t *testing.T) {
 
 func TestHammingDistance(t *testing.T) {
 	// trying to calculate Hamming distance of strings of different lengths should produce error
-	_, err := HammingDistance("abc", "abcde")
-	fmt.Println(err)
+	_, err := HammingDistance([]byte("abc"), []byte("abcde"))
 	assert.Error(t, err)
 	// success test
 	s1 := "this is a test"
 	s2 := "wokka wokka!!!"
-	fmt.Println(s1)
-	fmt.Println(s2)
-	got, err := HammingDistance(s1, s2)
+	got, err := HammingDistance([]byte(s1), []byte(s2))
 	want := 37
 	assert.NoError(t, err)
 	assert.Equal(t, want, got)
+}
+
+func TestDecryptVigenere(t *testing.T) {
+	// plaintext := "April is the cruelest month, breeding\nLilacs out of the dead land, mixing\nMemory and desire, stirring\n Dull roots with spring rain.\nWinter kept us warm, covering\nEarth in forgetful snow, feeding\nA little life with dried tubers."
+	// key := "TSELIOT"
+	// // encrypt with repeated XOR, decode hex and re-encode with base64
+	// ciphertext := "FSM3JSVvPSdzMSQsbzcmJiAgLDwgdD4qIj0neHQxNyksKz06NE8AICM1NyBlIzw7dDs1ZTghKnQwNiQoaSM1OjdpbCQmLD09IkYEKjk7ITxsKCEwdDcgPyA9MXhzNjggPSY9PSJGaQshOD9lPiYgICdzMiU9J3QnIzclJyh0JjIsImdFAz09MSk7bz8xIzFsPDx0IzI3IWVvNzslID4gITNeFiQ+PSd0PT1lKiY9MzEnIzklbyc6PDJgaSkxMTcsIi5FFXQ/LDg9IzF0PywqLG8jPSctbC09PTE3ZTg8LTEmIGs="
 }
