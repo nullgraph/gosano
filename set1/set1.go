@@ -39,7 +39,8 @@ func Problem2() string {
 // Link: https://cryptopals.com/sets/1/challenges/3
 func Problem3() crypt.Guess {
 	s := "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
-	guess := crypt.DecryptSingleXOR(s)
+	b1, _ := hex.DecodeString(s)
+	guess := crypt.DecryptSingleXOR(b1)
 	return guess
 }
 
@@ -64,7 +65,11 @@ func Problem4(filename string) crypt.Guess {
 	}
 
 	for _, cipher := range ciphers {
-		guess := crypt.DecryptSingleXOR(cipher)
+		ciphertext, err := hex.DecodeString(cipher)
+		if err != nil {
+			panic(err)
+		}
+		guess := crypt.DecryptSingleXOR(ciphertext)
 		guesses = append(guesses, guess)
 	}
 

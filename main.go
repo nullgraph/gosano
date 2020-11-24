@@ -19,7 +19,7 @@ func main() {
 	if err != nil {
 		panic("file wasn't base64 encoded")
 	}
-	fmt.Println(ciphertext, len(ciphertext))
+	fmt.Println(len(ciphertext), ciphertext)
 	// fmt.Println(crypt.GuessRepeatedXORKeyLength(ciphertext))
 	crypt.DecryptRepeatedXOR(ciphertext)
 }
