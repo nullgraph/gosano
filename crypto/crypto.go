@@ -75,15 +75,12 @@ func RepeatedBytes(b byte, length int) []byte {
 }
 
 // RepeatedXOR xors the key repeatedly against the plaintext. The ciphertext is hex encoded.
-func RepeatedXOR(plaintext, key string) string {
-	blaintext := []byte(plaintext)
-	bkey := []byte(key)
-
-	bcipher := make([]byte, len(blaintext))
-	for i, blain := range blaintext {
-		bcipher[i] = blain ^ bkey[i%len(bkey)]
+func RepeatedXOR(plaintext, key []byte) []byte {
+	ciphertext := make([]byte, len(plaintext))
+	for i, b := range plaintext {
+		ciphertext[i] = b ^ key[i%len(key)]
 	}
-	return hex.EncodeToString(bcipher)
+	return ciphertext
 }
 
 // HammingDistance calculates the number of differing **bits** between two strings. We do it by XOR'ing the two strings and then count the number of 1s in the result.
@@ -135,18 +132,30 @@ func chunkCiphertextForRepeatedXOR(ciphertext []byte, keysize int) [][]byte {
 }
 
 // DecryptRepeatedXOR decrypts a plaintext that was encrypted with the repeated XOR method.
-func DecryptRepeatedXOR(ciphertext []byte) (Guess, error) {
+func DecryptRepeatedXOR(ciphertext []byte) Guess {
 	// choosing numberOfKeysizeGuesses is an art, adjust this parameter as needed
 	numberOfKeysizeGuesses := 3
 	keysizes := guessRepeatedXORKeyLength(ciphertext)
-	fmt.Println(keysizes)
+	// fmt.Println(keysizes)
 
+	var guesses []Guess
 	for i := 0; i < numberOfKeysizeGuesses; i++ {
-		fmt.Println(i)
-		fmt.Println(keysizes[i])
+		// fmt.Printf("i=%d keysizeGuess %v\n", i, keysizes[i])
+		key := ""
 		chunks := chunkCiphertextForRepeatedXOR(ciphertext, keysizes[i].keysize)
-		fmt.Println(len(chunks), chunks)
+		for _, chunk := range chunks {
+			// fmt.Println(chunk)
+			columnGuess := DecryptSingleXOR(chunk)
+			key += columnGuess.Key
+		}
+		plaintext := RepeatedXOR(ciphertext, []byte(key))
+		prob := Chi2Probability(string(plaintext))
+		guess := Guess{Key: key, Plaintext: string(plaintext), Probability: prob}
+		guesses = append(guesses, guess)
 	}
 
-	return Guess{}, nil
+	sort.Slice(guesses,
+		func(i, j int) bool { return guesses[i].Probability < guesses[j].Probability })
+
+	return guesses[0]
 }

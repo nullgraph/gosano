@@ -21,5 +21,5 @@ func main() {
 	}
 	fmt.Println(len(ciphertext), ciphertext)
 	// fmt.Println(crypt.GuessRepeatedXORKeyLength(ciphertext))
-	crypt.DecryptRepeatedXOR(ciphertext)
+	fmt.Println(crypt.DecryptRepeatedXOR(ciphertext))
 }

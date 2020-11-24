@@ -1,6 +1,8 @@
 package crypto
 
 import (
+	"encoding/base64"
+	"encoding/hex"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,7 +28,7 @@ func TestRepeatedXOR(t *testing.T) {
 	plaintext := "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal"
 	key := "ICE"
 	ciphertext := "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f"
-	got := RepeatedXOR(plaintext, key)
+	got := hex.EncodeToString(RepeatedXOR([]byte(plaintext), []byte(key)))
 	assert.Equal(t, ciphertext, got)
 }
 
@@ -44,8 +46,18 @@ func TestHammingDistance(t *testing.T) {
 }
 
 func TestDecryptVigenere(t *testing.T) {
-	// plaintext := "April is the cruelest month, breeding\nLilacs out of the dead land, mixing\nMemory and desire, stirring\n Dull roots with spring rain.\nWinter kept us warm, covering\nEarth in forgetful snow, feeding\nA little life with dried tubers."
-	// key := "TSELIOT"
-	// // encrypt with repeated XOR, decode hex and re-encode with base64
-	// ciphertext := "FSM3JSVvPSdzMSQsbzcmJiAgLDwgdD4qIj0neHQxNyksKz06NE8AICM1NyBlIzw7dDs1ZTghKnQwNiQoaSM1OjdpbCQmLD09IkYEKjk7ITxsKCEwdDcgPyA9MXhzNjggPSY9PSJGaQshOD9lPiYgICdzMiU9J3QnIzclJyh0JjIsImdFAz09MSk7bz8xIzFsPDx0IzI3IWVvNzslID4gITNeFiQ+PSd0PT1lKiY9MzEnIzklbyc6PDJgaSkxMTcsIi5FFXQ/LDg9IzF0PywqLG8jPSctbC09PTE3ZTg8LTEmIGs="
+	plaintext := "April is the cruelest month, breeding\nLilacs out of the dead land, mixing\nMemory and desire, stirring\n Dull roots with spring rain.\nWinter kept us warm, covering\nEarth in forgetful snow, feeding\nA little life with dried tubers."
+	key := "TSELIOT"
+
+	// encrypt with repeated XOR, decode hex and re-encode with base64
+	ciphertextString := "FSM3JSVvPSdzMSQsbzcmJiAgLDwgdD4qIj0neHQxNyksKz06NE8AICM1NyBlIzw7dDs1ZTghKnQwNiQoaSM1OjdpbCQmLD09IkYEKjk7ITxsKCEwdDcgPyA9MXhzNjggPSY9PSJGaQshOD9lPiYgICdzMiU9J3QnIzclJyh0JjIsImdFAz09MSk7bz8xIzFsPDx0IzI3IWVvNzslID4gITNeFiQ+PSd0PT1lKiY9MzEnIzklbyc6PDJgaSkxMTcsIi5FFXQ/LDg9IzF0PywqLG8jPSctbC09PTE3ZTg8LTEmIGs="
+
+	// now try to break it
+	ciphertext, err := base64.StdEncoding.DecodeString(ciphertextString)
+	if err != nil {
+		panic("file wasn't base64 encoded")
+	}
+	guess := DecryptRepeatedXOR(ciphertext)
+	assert.Equal(t, key, guess.Key)
+	assert.Equal(t, plaintext, guess.Plaintext)
 }

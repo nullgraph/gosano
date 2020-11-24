@@ -111,8 +111,8 @@ func ReverseProblem4() {
 func Problem5() string {
 	plaintext := "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal"
 	key := "ICE"
-	ciphertext := crypt.RepeatedXOR(plaintext, key)
-	return ciphertext
+	ciphertext := crypt.RepeatedXOR([]byte(plaintext), []byte(key))
+	return hex.EncodeToString(ciphertext)
 }
 
 // Problem6 breaks repeated XOR
