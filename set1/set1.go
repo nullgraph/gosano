@@ -40,11 +40,12 @@ func Problem2() string {
 func Problem3() crypt.Guess {
 	s := "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
 	b1, _ := hex.DecodeString(s)
-	guess := crypt.DecryptSingleXOR(b1)
+	guess := crypt.DecryptSingleXOR(b1)[0]
 	return guess
 }
 
 // Problem4 detects a string which was single-XOR'd in a file.
+// Link: https://cryptopals.com/sets/1/challenges/4
 func Problem4(filename string) crypt.Guess {
 	var ciphers []string
 	var guesses []crypt.Guess
@@ -69,7 +70,7 @@ func Problem4(filename string) crypt.Guess {
 		if err != nil {
 			panic(err)
 		}
-		guess := crypt.DecryptSingleXOR(ciphertext)
+		guess := crypt.DecryptSingleXOR(ciphertext)[0]
 		guesses = append(guesses, guess)
 	}
 
@@ -117,18 +118,20 @@ func Problem5() string {
 
 // Problem6 breaks repeated XOR
 // https://cryptopals.com/sets/1/challenges/6
-func Problem6(filename string) string {
+func Problem6(filename string) crypt.Guess {
 	// read file
 	content, err := ioutil.ReadFile(filename)
 	if err != nil {
 		panic(fmt.Sprintf("file %v not available", filename))
 	}
 
-	cipher, err := base64.StdEncoding.DecodeString(string(content))
+	ciphertext, err := base64.StdEncoding.DecodeString(string(content))
 	if err != nil {
 		panic("file wasn't base64 encoded")
 	}
-	fmt.Println(cipher)
 
-	return ""
+	guess := crypt.DecryptRepeatedXOR(ciphertext)
+	fmt.Println("final key", guess.Key)
+
+	return guess
 }

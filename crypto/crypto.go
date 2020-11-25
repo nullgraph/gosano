@@ -27,11 +27,12 @@ func FixedXOR(b1 []byte, b2 []byte) []byte {
 	return out
 }
 
-// DecryptSingleXOR guesses the single character that was used to XOR the plaintext. It uses chi2 probability test.
-func DecryptSingleXOR(ciphertext []byte) Guess {
+// DecryptSingleXOR guesses the single character that was used to XOR the plaintext.
+// It uses chi2 probability test.
+func DecryptSingleXOR(ciphertext []byte) []Guess {
 	var guesses []Guess
 
-	for i := 48; i <= 122; i++ {
+	for i := 0; i <= 255; i++ {
 		b2 := RepeatedBytes(byte(i), len(ciphertext))
 		xored := string(FixedXOR(ciphertext, b2))
 		prob := Chi2Probability(strings.ToLower(xored))
@@ -40,11 +41,11 @@ func DecryptSingleXOR(ciphertext []byte) Guess {
 	sort.Slice(guesses,
 		func(i, j int) bool { return guesses[i].Probability < guesses[j].Probability })
 	// fmt.Println(guesses)
-	return guesses[0]
+	return guesses
 }
 
 // EncryptSingleXOR encrypts the plaintext with a repetition of the key.
-// The ciphertext is hex encoded
+// The ciphertext is hex encoded.
 func EncryptSingleXOR(plaintext string, key byte) string {
 	b1 := []byte(plaintext)
 	b2 := RepeatedBytes(key, len(b1))
@@ -83,7 +84,8 @@ func RepeatedXOR(plaintext, key []byte) []byte {
 	return ciphertext
 }
 
-// HammingDistance calculates the number of differing **bits** between two strings. We do it by XOR'ing the two strings and then count the number of 1s in the result.
+// HammingDistance calculates the number of differing **bits** between two byte arrays.
+// We do it by one byte at a time by XOR'ing them and then count the number of 1s in the result.
 func HammingDistance(b1, b2 []byte) (int, error) {
 	if len(b1) != len(b2) {
 		return 0, fmt.Errorf("Hamming distance of byte arrays of different lengths %d and %d", len(b1), len(b2))
@@ -99,14 +101,15 @@ func HammingDistance(b1, b2 []byte) (int, error) {
 	return distance, nil
 }
 
-// keysizeGuess represents a guess for the keysize in a repeated XOR cipher; distance is the normalized Hamming distance of the first two chunks.
+// keysizeGuess represents a guess for the keysize in a repeated XOR cipher;
+// distance is the normalized Hamming distance of the first two chunks.
 type keysizeGuess struct {
 	keysize  int
 	distance float32
 }
 
-// guessRepeatedXORKeyLength tries to guess the key size for a repeated XOR encryption
-func guessRepeatedXORKeyLength(ciphertext []byte) []keysizeGuess {
+// guessRepeatedXORKeySize tries to guess the key size for a repeated XOR encryption
+func guessRepeatedXORKeySize(ciphertext []byte) []keysizeGuess {
 	var distances []keysizeGuess
 	for i := 2; i <= 40; i++ {
 		chunk1 := ciphertext[0:i]
@@ -122,7 +125,34 @@ func guessRepeatedXORKeyLength(ciphertext []byte) []keysizeGuess {
 	return distances
 }
 
-// chunkCiphertextForRepeatedXOR vertically breaks ciphertext into chunks of bytes. There are `keysize` rows, each contains the bytes of i-th column. Each row's length is dependent on how long the ciphertext is; in fact, we don't even care that the matrix comes out to be irregular because each row will be treated as a separate ciphertext of SingleXOR to be broken later.
+func alternativeGuessForRepeatedXORKeySize(ciphertext []byte) []keysizeGuess {
+	var distances []keysizeGuess
+	for i := 2; i <= 40; i++ {
+		chunk1 := ciphertext[0:i]
+		chunk2 := ciphertext[i : 2*i]
+		chunk3 := ciphertext[2*i : 3*i]
+		chunk4 := ciphertext[3*i : 4*i]
+		distance1, err := HammingDistance(chunk1, chunk2)
+		if err != nil {
+			panic(err)
+		}
+		distance2, err := HammingDistance(chunk3, chunk4)
+		if err != nil {
+			panic(err)
+		}
+		distances = append(distances, keysizeGuess{i, float32(distance1) / float32(distance2)})
+	}
+	sort.Slice(distances,
+		func(i, j int) bool { return distances[i].distance < distances[j].distance })
+	return distances
+}
+
+// chunkCiphertextForRepeatedXOR vertically breaks ciphertext into chunks of bytes.
+// There are `keysize` rows, each contains the bytes of i-th column.
+// Each row's length is dependent on how long the ciphertext is;
+// in fact, we don't even care that the matrix comes out to be irregular
+// because each row will be treated as a separate ciphertext of SingleXOR
+// to be broken later.
 func chunkCiphertextForRepeatedXOR(ciphertext []byte, keysize int) [][]byte {
 	chunks := make([][]byte, keysize)
 	for i := range ciphertext {
@@ -131,31 +161,74 @@ func chunkCiphertextForRepeatedXOR(ciphertext []byte, keysize int) [][]byte {
 	return chunks
 }
 
-// DecryptRepeatedXOR decrypts a plaintext that was encrypted with the repeated XOR method.
+// MakePermutationsFromBuckets produces permutations of the choices,
+// i.e., each slot should contain all the choices for that slot.
+// In total, there should be (numChoices)**(numSlots) elements in the result.
+func MakePermutationsFromBuckets(elts [][]string, numSlots, slotIndex int) []string {
+	if slotIndex == numSlots-1 {
+		return elts[slotIndex]
+	}
+	laterElts := MakePermutationsFromBuckets(elts, numSlots, slotIndex+1)
+	var outputs []string
+	for _, choice := range elts[slotIndex] {
+		for _, later := range laterElts {
+			outputs = append(outputs, choice+later)
+		}
+	}
+	return outputs
+}
+
+// DecryptRepeatedXOR decrypts a plaintext that was encrypted
+// with the repeated XOR method.
+// This is analogous to breaking Vigenere.
 func DecryptRepeatedXOR(ciphertext []byte) Guess {
-	// choosing numberOfKeysizeGuesses is an art, adjust this parameter as needed
-	numberOfKeysizeGuesses := 3
-	keysizes := guessRepeatedXORKeyLength(ciphertext)
+	// choosing numberOfKeysizeGuesses is an art,
+	// adjust this parameter as needed
+	// numberOfKeysizeGuesses := 5
+	numberOfKeysizeGuesses := 1
+	// numberOfFixedXORGuesses is the allowed guesses for each FixedXOR
+	// vertical chunks. Be careful to keep this number small or the total
+	// number of guesses (numberOfFixedXORGuesses^numberOfKeysizeGuesses)
+	// will blow up.
+	numberOfFixedXORGuesses := 3
+	keysizes := guessRepeatedXORKeySize(ciphertext)
 	// fmt.Println(keysizes)
 
-	var guesses []Guess
-	for i := 0; i < numberOfKeysizeGuesses; i++ {
-		// fmt.Printf("i=%d keysizeGuess %v\n", i, keysizes[i])
-		key := ""
-		chunks := chunkCiphertextForRepeatedXOR(ciphertext, keysizes[i].keysize)
-		for _, chunk := range chunks {
+	fmt.Println(ciphertext[0:50])
+	// var guesses []Guess
+	for n := 0; n < numberOfKeysizeGuesses; n++ {
+		fmt.Printf("n=%d keysizeGuess %v\n", n, keysizes[n])
+		columnGuesses := make([][]Guess, keysizes[n].keysize)
+		chunks := chunkCiphertextForRepeatedXOR(ciphertext, keysizes[n].keysize)
+		for i, chunk := range chunks {
 			// fmt.Println(chunk)
-			columnGuess := DecryptSingleXOR(chunk)
-			key += columnGuess.Key
+			columnGuesses[i] = DecryptSingleXOR(chunk)
+			// fmt.Printf("   %v %v\n", columnGuess.Probability, columnGuess.Key)
+			// key += columnGuess.Key
 		}
-		plaintext := RepeatedXOR(ciphertext, []byte(key))
-		prob := Chi2Probability(string(plaintext))
-		guess := Guess{Key: key, Plaintext: string(plaintext), Probability: prob}
-		guesses = append(guesses, guess)
+
+		keyChoices := make([][]string, keysizes[n].keysize)
+		for i := range columnGuesses {
+			for j := 0; j < numberOfFixedXORGuesses; j++ {
+				keyChoices[i] = append(keyChoices[i], columnGuesses[i][j].Key)
+			}
+		}
+		fmt.Println(keyChoices)
+
+		keys := MakePermutationsFromBuckets(keyChoices, keysizes[n].keysize, 0)
+		// fmt.Println(keys)
+		fmt.Println(len(keys))
+
+		// plaintext := RepeatedXOR(ciphertext, []byte(key))
+		// prob := Chi2Probability(string(plaintext))
+		// fmt.Printf("keysize=%d key=%v prob=%v\n", keysizes[n].keysize, key, prob)
+		// guess := Guess{Key: key, Plaintext: string(plaintext), Probability: prob}
+		// guesses = append(guesses, guess)
 	}
 
-	sort.Slice(guesses,
-		func(i, j int) bool { return guesses[i].Probability < guesses[j].Probability })
+	// sort.Slice(guesses,
+	// 	func(i, j int) bool { return guesses[i].Probability < guesses[j].Probability })
 
-	return guesses[0]
+	// return guesses[0]
+	return Guess{}
 }

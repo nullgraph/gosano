@@ -3,6 +3,7 @@ package crypto
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -45,7 +46,37 @@ func TestHammingDistance(t *testing.T) {
 	assert.Equal(t, want, got)
 }
 
-func TestDecryptVigenere(t *testing.T) {
+func TestMakePermutationsFromBuckets(t *testing.T) {
+	var elts = [][]string{
+		{"0", "1", "2"},
+		{"a", "b", "c"},
+		{"E", "F", "G"},
+	}
+	numSlots := 3
+	numChoices := 3
+	outputs := MakePermutationsFromBuckets(elts, numSlots, 0)
+	expectedLength := int(math.Pow(float64(numChoices), float64(numSlots)))
+	expected := []string{"0aE", "0aF", "0aG", "0bE", "0bF", "0bG", "0cE", "0cF", "0cG", "1aE", "1aF", "1aG", "1bE", "1bF", "1bG", "1cE", "1cF", "1cG", "2aE", "2aF", "2aG", "2bE", "2bF", "2bG", "2cE", "2cF", "2cG"}
+	assert.Equal(t, expectedLength, len(outputs))
+	assert.Equal(t, expected, outputs)
+
+	elts = [][]string{
+		{"T", "S", "t"},
+		{"S", "T", "s"},
+		{"E", "e", "B"},
+		{"L", "K", "l"},
+		{"I", "i", "N"},
+		{"O", "H", "o"},
+		{"T", "X", "t"},
+	}
+	numSlots = 7
+	numChoices = 3
+	outputs = MakePermutationsFromBuckets(elts, numSlots, 0)
+	expectedLength = int(math.Pow(float64(numChoices), float64(numSlots)))
+	assert.Equal(t, expectedLength, len(outputs))
+}
+
+func TestDecryptRepeatedXOR(t *testing.T) {
 	plaintext := "April is the cruelest month, breeding\nLilacs out of the dead land, mixing\nMemory and desire, stirring\n Dull roots with spring rain.\nWinter kept us warm, covering\nEarth in forgetful snow, feeding\nA little life with dried tubers."
 	key := "TSELIOT"
 
