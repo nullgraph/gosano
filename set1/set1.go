@@ -132,6 +132,7 @@ func Problem6(filename string) crypt.Guess {
 
 	guess := crypt.DecryptRepeatedXOR(ciphertext)
 	fmt.Println("final key", guess.Key)
+	// fmt.Println(guess.Plaintext)
 
 	return guess
 }

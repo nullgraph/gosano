@@ -184,18 +184,21 @@ func MakePermutationsFromBuckets(elts [][]string, numSlots, slotIndex int) []str
 func DecryptRepeatedXOR(ciphertext []byte) Guess {
 	// choosing numberOfKeysizeGuesses is an art,
 	// adjust this parameter as needed
-	// numberOfKeysizeGuesses := 5
-	numberOfKeysizeGuesses := 1
+	numberOfKeysizeGuesses := 3
 	// numberOfFixedXORGuesses is the allowed guesses for each FixedXOR
 	// vertical chunks. Be careful to keep this number small or the total
-	// number of guesses (numberOfFixedXORGuesses^numberOfKeysizeGuesses)
+	// number of guesses (numberOfFixedXORGuesses**numberOfKeysizeGuesses)
 	// will blow up.
-	numberOfFixedXORGuesses := 3
-	keysizes := guessRepeatedXORKeySize(ciphertext)
-	// fmt.Println(keysizes)
+	// numberOfFixedXORGuesses := 3
+	numberOfFixedXORGuesses := 2
+	fmt.Println(numberOfKeysizeGuesses, numberOfFixedXORGuesses)
 
-	fmt.Println(ciphertext[0:50])
-	// var guesses []Guess
+	// keysizes := guessRepeatedXORKeySize(ciphertext)
+	// fmt.Println(keysizes)
+	keysizes := alternativeGuessForRepeatedXORKeySize(ciphertext)
+	fmt.Println(keysizes)
+
+	var guesses []Guess
 	for n := 0; n < numberOfKeysizeGuesses; n++ {
 		fmt.Printf("n=%d keysizeGuess %v\n", n, keysizes[n])
 		columnGuesses := make([][]Guess, keysizes[n].keysize)
@@ -207,28 +210,32 @@ func DecryptRepeatedXOR(ciphertext []byte) Guess {
 			// key += columnGuess.Key
 		}
 
-		keyChoices := make([][]string, keysizes[n].keysize)
+		keyBuckets := make([][]string, keysizes[n].keysize)
 		for i := range columnGuesses {
 			for j := 0; j < numberOfFixedXORGuesses; j++ {
-				keyChoices[i] = append(keyChoices[i], columnGuesses[i][j].Key)
+				keyBuckets[i] = append(keyBuckets[i], columnGuesses[i][j].Key)
 			}
 		}
-		fmt.Println(keyChoices)
+		fmt.Println(keyBuckets)
 
-		keys := MakePermutationsFromBuckets(keyChoices, keysizes[n].keysize, 0)
+		keys := MakePermutationsFromBuckets(keyBuckets, keysizes[n].keysize, 0)
 		// fmt.Println(keys)
-		fmt.Println(len(keys))
+		fmt.Println("num keys", len(keys))
 
-		// plaintext := RepeatedXOR(ciphertext, []byte(key))
-		// prob := Chi2Probability(string(plaintext))
-		// fmt.Printf("keysize=%d key=%v prob=%v\n", keysizes[n].keysize, key, prob)
-		// guess := Guess{Key: key, Plaintext: string(plaintext), Probability: prob}
-		// guesses = append(guesses, guess)
+		for _, key := range keys {
+			plaintext := RepeatedXOR(ciphertext, []byte(key))
+			prob := Chi2Probability(string(plaintext))
+			// fmt.Printf("key=%v prob=%v    ", key, prob)
+			guess := Guess{Key: key, Plaintext: string(plaintext), Probability: prob}
+			guesses = append(guesses, guess)
+		}
+
 	}
 
-	// sort.Slice(guesses,
-	// 	func(i, j int) bool { return guesses[i].Probability < guesses[j].Probability })
+	sort.Slice(guesses,
+		func(i, j int) bool { return guesses[i].Probability < guesses[j].Probability })
 
-	// return guesses[0]
-	return Guess{}
+	return guesses[0]
+
+	// return Guess{}
 }
