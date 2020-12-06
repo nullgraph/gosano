@@ -20,10 +20,17 @@ func main() {
 	// guess := crypt.DecryptRepeatedXOR(ciphertext)
 	// fmt.Println(guess)
 
-	plaintext := "TO BE OR NOT TO BE THAT IS THE QUESTION"
-	plaintext = strings.Join(strings.Fields(plaintext), "")
-	fmt.Println(plaintext)
-	key := "RELATIONS"
-	cipheretext := crypt.EncryptWithVigenere([]byte(plaintext), []byte(key))
-	fmt.Println(string(cipheretext))
+	// plaintext := "TO BE OR NOT TO BE THAT IS THE QUESTION"
+	// plaintext = strings.Join(strings.Fields(plaintext), "")
+	// fmt.Println(plaintext)
+	// key := "RELATIONS"
+	// cipheretext := crypt.EncryptWithVigenere([]byte(plaintext), []byte(key))
+	// fmt.Println(string(cipheretext))
+	// crypt.BreakVigenere(cipheretext)
+
+	cipheretext := "vptnvffuntshtarptymjwzirappljmhhqvsubwlzzygvtyitarptyiougxiuydtgzhhvvmumshwkzgstfmekvmpkswdgbilvjljmglmjfqwioiivknulvvfemioiemojtywdsajtwmtcgluy	sdsumfbieugmvalvxkjduetukatymvkqzhvqvgvptytjwwldyeevquhlulwpkt"
+	cipheretext = strings.Join(strings.Fields(cipheretext), "")
+	cipheretext = strings.ToUpper(cipheretext)
+	fmt.Println(cipheretext)
+	crypt.BreakVigenere([]byte(cipheretext))
 }

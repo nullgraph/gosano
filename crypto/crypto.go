@@ -111,7 +111,7 @@ type keysizeGuess struct {
 // guessRepeatedXORKeySize tries to guess the key size for a repeated XOR encryption
 func guessRepeatedXORKeySize(ciphertext []byte) []keysizeGuess {
 	var distances []keysizeGuess
-	for i := 2; i <= 40; i++ {
+	for i := 3; i <= 40; i++ {
 		chunk1 := ciphertext[0:i]
 		chunk2 := ciphertext[i : 2*i]
 		distance, err := HammingDistance(chunk1, chunk2)
@@ -193,10 +193,10 @@ func DecryptRepeatedXOR(ciphertext []byte) Guess {
 	numberOfFixedXORGuesses := 2
 	fmt.Println(numberOfKeysizeGuesses, numberOfFixedXORGuesses)
 
-	// keysizes := guessRepeatedXORKeySize(ciphertext)
-	// fmt.Println(keysizes)
-	keysizes := alternativeGuessForRepeatedXORKeySize(ciphertext)
+	keysizes := guessRepeatedXORKeySize(ciphertext)
 	fmt.Println(keysizes)
+	// keysizes := alternativeGuessForRepeatedXORKeySize(ciphertext)
+	// fmt.Println(keysizes)
 
 	var guesses []Guess
 	for n := 0; n < numberOfKeysizeGuesses; n++ {

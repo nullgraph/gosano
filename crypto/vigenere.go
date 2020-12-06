@@ -1,6 +1,9 @@
 package crypto
 
-import "fmt"
+import (
+	"fmt"
+	"sort"
+)
 
 var vigenereTableau = GenerateVignereTableau()
 var firstLetter = 65 // ascii code of the first letter
@@ -45,4 +48,31 @@ func EncryptWithVigenere(plaintext, key []byte) []byte {
 	return ciphertext
 }
 
-// func GuessVignereKeySize(ciphertext []byte)
+// GuessVignereKeySize tries to guess the keysize by "Hamming distance"
+// It's basically the number of different letters normalized by length,
+// the smaller the distance is, the more likely the two byte arrays are the same
+func GuessVignereKeySize(ciphertext []byte) []keysizeGuess {
+	var guesses []keysizeGuess
+	for i := 3; i < 13; i++ {
+		distance := 0
+		for j := 0; j < i; j++ {
+			distance += int(ciphertext[j] ^ ciphertext[i+j])
+		}
+		// hamming, _ := HammingDistance(ciphertext[0:i], ciphertext[i:i*2])
+		// fmt.Println(i, float32(hamming)/float32(i), float32(distance)/float32(i))
+		guesses = append(guesses, keysizeGuess{i, float32(distance) / float32(i)})
+	}
+	sort.Slice(guesses,
+		func(i, j int) bool { return guesses[i].distance < guesses[j].distance })
+	// fmt.Println(guesses)
+	return guesses
+}
+
+// BreakVigenere breaks the Vignere ciphertext given
+func BreakVigenere(ciphertext []byte) {
+	numKeySizeGuesses := 3
+	keysizeGuesses := GuessVignereKeySize(ciphertext)
+	for i := 0; i < numKeySizeGuesses; i++ {
+		fmt.Println(keysizeGuesses[i])
+	}
+}
