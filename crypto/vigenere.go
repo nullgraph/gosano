@@ -76,3 +76,31 @@ func BreakVigenere(ciphertext []byte) {
 		fmt.Println(keysizeGuesses[i])
 	}
 }
+
+// Modulus is not Remainder, i.e., it will return the least positive
+// representation of the equivalence class of `a` mod `b`, not the remainder of
+// `a` divided by `b`. There's probably no huge loss of performance here, it's
+// expected that the compiler will inline this function.
+func Modulus(a, b int) int {
+	return (a%b + b) % b
+}
+
+// Rot is Ceasar shift, but it can also be done with the Vigenere Tableau
+func Rot(plaintext []byte, key int) []byte {
+	var ciphertext []byte
+	for i := range plaintext {
+		letter := int(plaintext[i]) - firstLetter + key
+		ciphertext = append(
+			ciphertext,
+			byte(Modulus(letter, 26)+firstLetter))
+	}
+	return ciphertext
+}
+
+// BreakCeasar attempts to break the Ceasar cipher by chi2 probability testing
+func BreakCeasar(ciphertext []byte) []Guess {
+	for i := firstLetter; i < firstLetter+26; i++ {
+		fmt.Printf("%q ", i)
+	}
+	return []Guess{}
+}
