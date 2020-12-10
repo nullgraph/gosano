@@ -44,3 +44,12 @@ func TestRot(t *testing.T) {
 	got = string(Rot([]byte(plaintext), -3))
 	assert.Equal(t, want, got)
 }
+
+func TestBreakCeasar(t *testing.T) {
+	plaintext := "THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG"
+	plaintext = strings.Join(strings.Fields(plaintext), "")
+	ciphertext := "WKHTXLFNEURZQIRAMXPSVRYHUWKHODCBGRJ"
+	guesses := BreakCeasar([]byte(ciphertext))
+	bestGuess := guesses[0]
+	assert.Equal(t, plaintext, bestGuess.Plaintext)
+}

@@ -99,8 +99,15 @@ func Rot(plaintext []byte, key int) []byte {
 
 // BreakCeasar attempts to break the Ceasar cipher by chi2 probability testing
 func BreakCeasar(ciphertext []byte) []Guess {
-	for i := firstLetter; i < firstLetter+26; i++ {
-		fmt.Printf("%q ", i)
+	var guesses []Guess
+	for i := 0; i < 26; i++ {
+		english := string(Rot(ciphertext, i))
+		prob := Chi2Probability(english)
+		key := string(byte(firstLetter + i))
+		guesses = append(guesses, Guess{key, prob, english})
 	}
-	return []Guess{}
+	sort.Slice(
+		guesses,
+		func(i, j int) bool { return guesses[i].Probability < guesses[j].Probability })
+	return guesses
 }

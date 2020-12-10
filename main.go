@@ -28,16 +28,9 @@ func main() {
 	// fmt.Println(string(cipheretext))
 	// crypt.BreakVigenere(cipheretext)
 
-	// cipheretext := "vptnvffuntshtarptymjwzirappljmhhqvsubwlzzygvtyitarptyiougxiuydtgzhhvvmumshwkzgstfmekvmpkswdgbilvjljmglmjfqwioiivknulvvfemioiemojtywdsajtwmtcgluy	sdsumfbieugmvalvxkjduetukatymvkqzhvqvgvptytjwwldyeevquhlulwpkt"
-	// cipheretext = strings.Join(strings.Fields(cipheretext), "")
-	// cipheretext = strings.ToUpper(cipheretext)
-	// fmt.Println(cipheretext)
-	// crypt.BreakVigenere([]byte(cipheretext))
-
-	plaintext := "THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG"
-	plaintext = strings.Join(strings.Fields(plaintext), "")
-	fmt.Println(plaintext)
-	ciphertext := crypt.Rot([]byte(plaintext), 3)
-	fmt.Println(string(ciphertext))
-	fmt.Println(crypt.BreakCeasar(ciphertext))
+	cipheretext := "vptnvffuntshtarptymjwzirappljmhhqvsubwlzzygvtyitarptyiougxiuydtgzhhvvmumshwkzgstfmekvmpkswdgbilvjljmglmjfqwioiivknulvvfemioiemojtywdsajtwmtcgluy	sdsumfbieugmvalvxkjduetukatymvkqzhvqvgvptytjwwldyeevquhlulwpkt"
+	cipheretext = strings.Join(strings.Fields(cipheretext), "")
+	cipheretext = strings.ToUpper(cipheretext)
+	fmt.Println(cipheretext)
+	crypt.BreakVigenere([]byte(cipheretext))
 }
