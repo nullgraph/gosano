@@ -1,11 +1,19 @@
 package crypto
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+// EncryptedText contains typical info about an encrypted string, useful for testing
+type EncryptedText struct {
+	Plaintext  string
+	Key        string
+	Ciphertext string
+}
 
 func TestEncryptWithVigenere(t *testing.T) {
 	plaintext := "TO BE OR NOT TO BE THAT IS THE QUESTION"
@@ -16,6 +24,15 @@ func TestEncryptWithVigenere(t *testing.T) {
 	cipheretext := EncryptWithVigenere([]byte(plaintext), []byte(key))
 	got := string(cipheretext)
 	// fmt.Println(got)
+	assert.Equal(t, want, got)
+}
+
+func TestDecryptWithVigenere(t *testing.T) {
+	ciphertext := "KSMEHZBBLKSMEMPOGAJXSEJCSFLZSY"
+	key := "RELATIONS"
+	want := "TOBEORNOTTOBETHATISTHEQUESTION"
+	plaintext := DecryptWithVigenere([]byte(ciphertext), []byte(key))
+	got := string(plaintext)
 	assert.Equal(t, want, got)
 }
 
@@ -52,4 +69,20 @@ func TestBreakCeasar(t *testing.T) {
 	guesses := BreakCeasar([]byte(ciphertext))
 	bestGuess := guesses[0]
 	assert.Equal(t, plaintext, bestGuess.Plaintext)
+}
+
+func TestBreakVignere(t *testing.T) {
+	tests := []EncryptedText{
+		{
+			Plaintext:  "TOBEORNOTTOBETHATISTHEQUESTION",
+			Ciphertext: "KSMEHZBBLKSMEMPOGAJXSEJCSFLZSY",
+			Key:        "RELATIONS",
+		},
+		{
+			Plaintext:  "",
+			Ciphertext: "VPTNVFFUNTSHTARPTYMJWZIRAPPLJMHHQVSUBWLZZYGVTYITARPTYIOUGXIUYDTGZHHVVMUMSHWKZGSTFMEKVMPKSWDGBILVJLJMGLMJFQWIOIIVKNULVVFEMIOIEMOJTYWDSAJTWMTCGLUYSDSUMFBIEUGMVALVXKJDUETUKATYMVKQZHVQVGVPTYTJWWLDYEEVQUHLULWPKT",
+			Key:        "CIPHERS",
+		},
+	}
+	fmt.Println(tests)
 }

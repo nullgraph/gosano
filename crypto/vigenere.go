@@ -6,7 +6,7 @@ import (
 )
 
 var vigenereTableau = GenerateVignereTableau()
-var firstLetter = 65 // ascii code of the first letter
+var firstLetterCode = 65 // ascii code of the first letter
 
 // GenerateVignereTableau produces the Vigenere table.
 // It's a 26x26 table, the entries are uppercase letters.
@@ -17,7 +17,7 @@ func GenerateVignereTableau() [][]byte {
 	}
 	// make first row
 	for i := 0; i < 26; i++ {
-		table[0][i] = byte(i + firstLetter)
+		table[0][i] = byte(i + firstLetterCode)
 	}
 	for j := 1; j < 26; j++ {
 		for i := 0; i < 26; i++ {
@@ -37,15 +37,34 @@ func PrintVigenereTableau() {
 	}
 }
 
-// EncryptWithVigenere encrypts the plaintext with the key using the Vigenere tableau
+// EncryptWithVigenere encrypts the plaintext with the key using the Vigenere
+// tableau. The key gives the row and the plaintext gives the columns.
+// Actually the tableu is symmetric switching rows and cols won't change anything.
 func EncryptWithVigenere(plaintext, key []byte) []byte {
 	var ciphertext []byte
 	for i := range plaintext {
-		row := int(plaintext[i]) - firstLetter
-		col := int(key[i%len(key)]) - firstLetter
+		col := int(plaintext[i]) - firstLetterCode
+		row := int(key[i%len(key)]) - firstLetterCode
 		ciphertext = append(ciphertext, vigenereTableau[row][col])
 	}
 	return ciphertext
+}
+
+// DecryptWithVigenere decrypts the ciphertext with the key
+func DecryptWithVigenere(ciphertext, key []byte) []byte {
+	var plaintext []byte
+	for i := range ciphertext {
+		rowNum := int(key[i%len(key)]) - firstLetterCode
+		var letter byte
+		for j := range vigenereTableau[rowNum] {
+			if vigenereTableau[rowNum][j] == ciphertext[i] {
+				letter = byte(j + firstLetterCode)
+				break
+			}
+		}
+		plaintext = append(plaintext, letter)
+	}
+	return plaintext
 }
 
 // GuessVignereKeySize tries to guess the keysize by "Hamming distance"
@@ -69,12 +88,30 @@ func GuessVignereKeySize(ciphertext []byte) []keysizeGuess {
 }
 
 // BreakVigenere breaks the Vignere ciphertext given
-func BreakVigenere(ciphertext []byte) {
+func BreakVigenere(ciphertext []byte) string {
 	numKeySizeGuesses := 3
 	keysizeGuesses := GuessVignereKeySize(ciphertext)
+	var possibleKeys []string
 	for i := 0; i < numKeySizeGuesses; i++ {
-		fmt.Println(keysizeGuesses[i])
+		// fmt.Println(keysizeGuesses[i])
+		chunks := ChunkCiphertextIntoVerticals(ciphertext, keysizeGuesses[i].keysize)
+		fmt.Printf("%q \n", chunks)
+		key := ""
+		for _, chunk := range chunks {
+			guesses := BreakCeasar(chunk)
+			k := guesses[0].Key
+			// fmt.Println(k)
+			key += k
+			// fmt.Println(key)
+		}
+		possibleKeys = append(possibleKeys, key)
+		fmt.Println(possibleKeys)
 	}
+	// another round of analysis to pick the likeliest key
+	// for _, key := range possibleKeys {
+
+	// }
+	return ""
 }
 
 // Modulus is not Remainder, i.e., it will return the least positive
@@ -89,10 +126,10 @@ func Modulus(a, b int) int {
 func Rot(plaintext []byte, key int) []byte {
 	var ciphertext []byte
 	for i := range plaintext {
-		letter := int(plaintext[i]) - firstLetter + key
+		letter := int(plaintext[i]) - firstLetterCode + key
 		ciphertext = append(
 			ciphertext,
-			byte(Modulus(letter, 26)+firstLetter))
+			byte(Modulus(letter, 26)+firstLetterCode))
 	}
 	return ciphertext
 }
@@ -103,7 +140,7 @@ func BreakCeasar(ciphertext []byte) []Guess {
 	for i := 0; i < 26; i++ {
 		english := string(Rot(ciphertext, i))
 		prob := Chi2Probability(english)
-		key := string(byte(firstLetter + i))
+		key := string(byte(firstLetterCode + i))
 		guesses = append(guesses, Guess{key, prob, english})
 	}
 	sort.Slice(

@@ -14,6 +14,13 @@ type Guess struct {
 	Plaintext   string
 }
 
+// keysizeGuess represents a guess for the keysize in a repeated XOR cipher;
+// distance is the normalized Hamming distance of the first two chunks.
+type keysizeGuess struct {
+	keysize  int
+	distance float32
+}
+
 // FixedXOR takes two equal-length buffers and produces their XOR combination
 func FixedXOR(b1 []byte, b2 []byte) []byte {
 	// check equal length
@@ -101,13 +108,6 @@ func HammingDistance(b1, b2 []byte) (int, error) {
 	return distance, nil
 }
 
-// keysizeGuess represents a guess for the keysize in a repeated XOR cipher;
-// distance is the normalized Hamming distance of the first two chunks.
-type keysizeGuess struct {
-	keysize  int
-	distance float32
-}
-
 // guessRepeatedXORKeySize tries to guess the key size for a repeated XOR encryption
 func guessRepeatedXORKeySize(ciphertext []byte) []keysizeGuess {
 	var distances []keysizeGuess
@@ -147,13 +147,13 @@ func alternativeGuessForRepeatedXORKeySize(ciphertext []byte) []keysizeGuess {
 	return distances
 }
 
-// chunkCiphertextForRepeatedXOR vertically breaks ciphertext into chunks of bytes.
+// ChunkCiphertextIntoVerticals vertically breaks ciphertext into chunks of bytes.
 // There are `keysize` rows, each contains the bytes of i-th column.
 // Each row's length is dependent on how long the ciphertext is;
 // in fact, we don't even care that the matrix comes out to be irregular
 // because each row will be treated as a separate ciphertext of SingleXOR
 // to be broken later.
-func chunkCiphertextForRepeatedXOR(ciphertext []byte, keysize int) [][]byte {
+func ChunkCiphertextIntoVerticals(ciphertext []byte, keysize int) [][]byte {
 	chunks := make([][]byte, keysize)
 	for i := range ciphertext {
 		chunks[i%keysize] = append(chunks[i%keysize], ciphertext[i])
@@ -202,7 +202,7 @@ func DecryptRepeatedXOR(ciphertext []byte) Guess {
 	for n := 0; n < numberOfKeysizeGuesses; n++ {
 		fmt.Printf("n=%d keysizeGuess %v\n", n, keysizes[n])
 		columnGuesses := make([][]Guess, keysizes[n].keysize)
-		chunks := chunkCiphertextForRepeatedXOR(ciphertext, keysizes[n].keysize)
+		chunks := ChunkCiphertextIntoVerticals(ciphertext, keysizes[n].keysize)
 		for i, chunk := range chunks {
 			// fmt.Println(chunk)
 			columnGuesses[i] = DecryptSingleXOR(chunk)
